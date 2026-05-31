@@ -6,6 +6,10 @@ import ChaosTyping from './MiniGames/ChaosTyping';
 import QuickMath from './MiniGames/QuickMath';
 import ClickRed from './MiniGames/ClickRed';
 import SoundRepeat from './MiniGames/SoundRepeat';
+import EmojiMatch from './MiniGames/EmojiMatch';
+import ShakeSoda from './MiniGames/ShakeSoda';
+import CoinCatch from './MiniGames/CoinCatch';
+import KeyMasher from './MiniGames/KeyMasher';
 
 const GAME_COMPONENTS = {
   BalloonPop,
@@ -14,7 +18,11 @@ const GAME_COMPONENTS = {
   ChaosTyping,
   QuickMath,
   ClickRed,
-  SoundRepeat
+  SoundRepeat,
+  EmojiMatch,
+  ShakeSoda,
+  CoinCatch,
+  KeyMasher
 };
 
 const GAME_INSTRUCTIONS = {
@@ -24,7 +32,11 @@ const GAME_INSTRUCTIONS = {
   ChaosTyping: { title: '⌨️ Chaos Typing', desc: 'Type the wacky words as fast as possible!' },
   QuickMath: { title: '🧮 Quick Math', desc: 'Choose YES or NO for simple math equations! (Keyboard: Arrow Left/Right)' },
   ClickRed: { title: '🔴 Click Red', desc: 'Click the red circle as fast as possible!' },
-  SoundRepeat: { title: '🔊 Sound Repeat', desc: 'Repeat the flashing pattern of sounds and lights!' }
+  SoundRepeat: { title: '🔊 Sound Repeat', desc: 'Repeat the flashing pattern of sounds and lights!' },
+  EmojiMatch: { title: '🔍 Emoji Match', desc: 'Find the odd emoji out as fast as you can!' },
+  ShakeSoda: { title: '🥤 Shake Soda', desc: 'Click/Tap the soda can repeatedly to shake it and explode it!' },
+  CoinCatch: { title: '🗑️ Coin Catch', desc: 'Move your basket to catch falling coins and avoid bombs!' },
+  KeyMasher: { title: '⌨️ Key Masher', desc: 'Mash the SPACEBAR or click the button as fast as possible!' }
 };
 
 export default function GameScreen({ 

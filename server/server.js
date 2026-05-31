@@ -32,8 +32,8 @@ function generateRoomCode() {
   return code;
 }
 
-// Increased Pool of 7 mini-games
-const MINI_GAMES = ['BalloonPop', 'PanicClicker', 'StroopChaos', 'ChaosTyping', 'QuickMath', 'ClickRed', 'SoundRepeat'];
+// Increased Pool of 11 mini-games
+const MINI_GAMES = ['BalloonPop', 'PanicClicker', 'StroopChaos', 'ChaosTyping', 'QuickMath', 'ClickRed', 'SoundRepeat', 'EmojiMatch', 'ShakeSoda', 'CoinCatch', 'KeyMasher'];
 
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
