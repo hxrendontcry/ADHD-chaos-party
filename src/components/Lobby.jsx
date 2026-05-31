@@ -85,7 +85,8 @@ export default function Lobby({ socket, setRoom, setPlayerId, useSoundHook, setS
       code: 'SOLO',
       hostId: 'YOU',
       players: {
-        'YOU': { id: 'YOU', name: name.trim(), avatar: selectedAvatar, score: 0, currentRoundScore: 0, isReady: true }
+        'YOU': { id: 'YOU', name: name.trim(), avatar: selectedAvatar, score: 0, currentRoundScore: 0, isReady: true },
+        'BOT': { id: 'BOT', name: 'Bot Turbo 🤖', avatar: '🤖', score: 0, currentRoundScore: 0, isReady: false }
       },
       gameStarted: true,
       currentRound: 0,
