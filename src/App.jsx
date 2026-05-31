@@ -287,6 +287,7 @@ export default function App() {
             setPlayerId={setPlayerId}
             useSoundHook={soundHook}
             setSoloMode={setIsSoloMode}
+            setStage={setStage}
           />
         );
       case 'room':

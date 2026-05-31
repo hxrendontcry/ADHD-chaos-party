@@ -3,7 +3,7 @@ import { getTopScores } from '../supabase';
 
 const AVATARS = ['👾', '🤪', '🦖', '🦙', '🍕', '🚀', '🦄', '💣', '🌶️', '🤡', '🍩', '🥑', '🍄', '🐙', '🐈'];
 
-export default function Lobby({ socket, setRoom, setPlayerId, useSoundHook, setSoloMode }) {
+export default function Lobby({ socket, setRoom, setPlayerId, useSoundHook, setSoloMode, setStage }) {
   const [name, setName] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState(AVATARS[0]);
   const [code, setCode] = useState('');
@@ -36,6 +36,7 @@ export default function Lobby({ socket, setRoom, setPlayerId, useSoundHook, setS
         setRoom(response.room);
         setPlayerId(socket.id);
         setSoloMode(false);
+        setStage('room');
       } else {
         setError(response.message || 'Failed to create room.');
       }
@@ -61,6 +62,7 @@ export default function Lobby({ socket, setRoom, setPlayerId, useSoundHook, setS
         setRoom(response.room);
         setPlayerId(socket.id);
         setSoloMode(false);
+        setStage('room');
       } else {
         playBuzzer();
         setError(response.message || 'Failed to join room.');
