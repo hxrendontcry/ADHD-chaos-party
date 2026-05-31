@@ -119,6 +119,12 @@ io.on('connection', (socket) => {
     room.roundsCount = parseInt(roundsCount) || 5;
     room.roundDuration = parseInt(roundDuration) || 10;
     
+    // Reset player scores for the new game session
+    Object.values(room.players).forEach(p => {
+      p.score = 0;
+      p.currentRoundScore = 0;
+    });
+    
     // Pick from host's selected games pool, or fallback to all games if none selected
     const activePool = (enabledGames && enabledGames.length > 0) ? enabledGames : MINI_GAMES;
     
@@ -189,11 +195,6 @@ io.on('connection', (socket) => {
             // Game Over
             io.to(code).emit('game-over', { players: room.players });
             room.gameStarted = false; // Reset room status so it can be replayed
-            // Reset player scores
-            allPlayers.forEach(p => {
-              p.score = 0;
-              p.currentRoundScore = 0;
-            });
           }
         }, 5000);
       }
@@ -303,10 +304,6 @@ function startRoundSequence(code, roundIndex) {
             } else {
               io.to(code).emit('game-over', { players: currentRoom.players });
               currentRoom.gameStarted = false;
-              allPlayers.forEach(p => {
-                p.score = 0;
-                p.currentRoundScore = 0;
-              });
             }
           }, 5000);
         }
