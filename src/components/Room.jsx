@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 
 export default function Room({ room, playerId, socket, useSoundHook }) {
   const [copied, setCopied] = useState(false);
+  const [roundsCount, setRoundsCount] = useState(5);
+  const [roundDuration, setRoundDuration] = useState(10);
+  
   const { playCoin } = useSoundHook;
 
   const players = Object.values(room.players);
@@ -16,7 +19,11 @@ export default function Room({ room, playerId, socket, useSoundHook }) {
 
   const handleStartGame = () => {
     playCoin();
-    socket.emit('start-game', { code: room.code });
+    socket.emit('start-game', { 
+      code: room.code,
+      roundsCount,
+      roundDuration
+    });
   };
 
   return (
@@ -67,6 +74,53 @@ export default function Room({ room, playerId, socket, useSoundHook }) {
 
         <hr style={styles.divider} />
 
+        {/* CUSTOMIZATION SETTINGS SECTION */}
+        <div style={styles.settingsSection}>
+          <h3 style={styles.sectionTitle}>🛠️ ROOM SETTINGS</h3>
+          {isHost ? (
+            <div style={styles.settingsForm}>
+              <div style={styles.settingsGroup}>
+                <label style={styles.settingsLabel}>ROUNDS COUNT</label>
+                <select 
+                  className="neon-input" 
+                  style={styles.selectInput}
+                  value={roundsCount} 
+                  onChange={(e) => { playCoin(); setRoundsCount(e.target.value); }}
+                >
+                  <option value={3}>3 Rounds (Short Blitz)</option>
+                  <option value={5}>5 Rounds (Standard)</option>
+                  <option value={7}>7 Rounds (Endurance)</option>
+                  <option value={10}>10 Rounds (Chaos Master)</option>
+                </select>
+              </div>
+
+              <div style={styles.settingsGroup}>
+                <label style={styles.settingsLabel}>STAGE DURATION</label>
+                <select 
+                  className="neon-input" 
+                  style={styles.selectInput}
+                  value={roundDuration} 
+                  onChange={(e) => { playCoin(); setRoundDuration(e.target.value); }}
+                >
+                  <option value={5}>5 seconds (LIGHTNING PANIC)</option>
+                  <option value={10}>10 seconds (Standard)</option>
+                  <option value={15}>15 seconds (Relaxed)</option>
+                  <option value={20}>20 seconds (Focus Mode)</option>
+                </select>
+              </div>
+            </div>
+          ) : (
+            <div style={styles.settingsReadOnly}>
+              <p>Host is choosing settings...</p>
+              <p style={{ color: 'var(--neon-cyan)', fontWeight: 'bold', marginTop: '5px' }}>
+                Default: 5 Rounds, 10s per round
+              </p>
+            </div>
+          )}
+        </div>
+
+        <hr style={styles.divider} />
+
         <div style={styles.footer}>
           {isHost ? (
             <div style={styles.hostControls}>
@@ -107,7 +161,7 @@ const styles = {
     padding: '30px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '24px'
+    gap: '20px'
   },
   header: {
     display: 'flex',
@@ -126,10 +180,7 @@ const styles = {
     fontSize: '3.6rem',
     cursor: 'pointer',
     letterSpacing: '3px',
-    transition: 'transform 0.15s',
-    '&:hover': {
-      transform: 'scale(1.05)'
-    }
+    transition: 'transform 0.15s'
   },
   copyBtn: {
     fontSize: '0.8rem',
@@ -150,7 +201,8 @@ const styles = {
     fontSize: '0.95rem',
     color: 'var(--text-muted)',
     letterSpacing: '1px',
-    textAlign: 'center'
+    textAlign: 'center',
+    marginBottom: '8px'
   },
   playerGrid: {
     display: 'grid',
@@ -191,6 +243,39 @@ const styles = {
     fontWeight: '800',
     padding: '2px 6px',
     borderRadius: '6px'
+  },
+  settingsSection: {
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  settingsForm: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px'
+  },
+  settingsGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px'
+  },
+  settingsLabel: {
+    fontFamily: 'var(--font-display)',
+    fontSize: '0.8rem',
+    fontWeight: '700',
+    color: 'var(--text-muted)'
+  },
+  selectInput: {
+    padding: '10px 15px',
+    fontSize: '0.95rem',
+    cursor: 'pointer'
+  },
+  settingsReadOnly: {
+    textAlign: 'center',
+    fontSize: '0.9rem',
+    color: 'var(--text-muted)',
+    background: 'rgba(0,0,0,0.15)',
+    padding: '12px',
+    borderRadius: '14px'
   },
   footer: {
     textAlign: 'center'

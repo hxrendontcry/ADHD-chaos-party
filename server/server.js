@@ -17,7 +17,6 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3001;
 
 // Room State Store
-// roomId -> { code, hostId, players: { socketId: { id, name, avatar, score, currentRoundScore, isReady } }, gameStarted, currentRound, miniGamesOrder }
 const rooms = new Map();
 
 // Helper to generate unique room code
@@ -33,8 +32,8 @@ function generateRoomCode() {
   return code;
 }
 
-// Mini-games list to cycle through
-const MINI_GAMES = ['BalloonPop', 'PanicClicker', 'StroopChaos', 'ChaosTyping', 'QuickMath'];
+// Increased Pool of 7 mini-games
+const MINI_GAMES = ['BalloonPop', 'PanicClicker', 'StroopChaos', 'ChaosTyping', 'QuickMath', 'ClickRed', 'SoundRepeat'];
 
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
@@ -57,7 +56,9 @@ io.on('connection', (socket) => {
       players: { [socket.id]: player },
       gameStarted: false,
       currentRound: 0,
-      miniGamesOrder: []
+      miniGamesOrder: [],
+      roundsCount: 5,
+      roundDuration: 10
     });
 
     socket.join(code);
@@ -101,21 +102,31 @@ io.on('connection', (socket) => {
     callback({ success: true, room });
   });
 
-  // 3. Start Game (Host only)
-  socket.on('start-game', ({ code }) => {
+  // 3. Start Game (Host only) - now receives customizable settings
+  socket.on('start-game', ({ code, roundsCount, roundDuration }) => {
     const room = rooms.get(code);
     if (!room || room.hostId !== socket.id) return;
 
     room.gameStarted = true;
     room.currentRound = 0;
     
-    // Shuffle mini-games list
+    // Save host settings
+    room.roundsCount = parseInt(roundsCount) || 5;
+    room.roundDuration = parseInt(roundDuration) || 10;
+    
+    // Shuffle and construct game rotation order
     const shuffled = [...MINI_GAMES].sort(() => Math.random() - 0.5);
-    room.miniGamesOrder = shuffled.slice(0, 5); // Take 5 games
+    let selectedGames = [];
+    for (let i = 0; i < room.roundsCount; i++) {
+      // Loop around the games list if round count exceeds 7
+      selectedGames.push(shuffled[i % shuffled.length]);
+    }
+    room.miniGamesOrder = selectedGames;
 
     io.to(code).emit('game-started', {
       miniGamesOrder: room.miniGamesOrder,
-      players: room.players
+      players: room.players,
+      roundDuration: room.roundDuration
     });
 
     // Start the first game sequence
@@ -129,7 +140,6 @@ io.on('connection', (socket) => {
 
     if (room.players[socket.id]) {
       room.players[socket.id].currentRoundScore = progress;
-      // Broadcast player progress to other players in the room (low-latency updates)
       socket.to(code).emit('progress-updated', {
         playerId: socket.id,
         progress
@@ -163,7 +173,7 @@ io.on('connection', (socket) => {
           currentRound: room.currentRound
         });
 
-        // Schedule next round or game end
+        // Schedule next round or game end after 5 seconds
         setTimeout(() => {
           if (room.currentRound < room.miniGamesOrder.length - 1) {
             room.currentRound += 1;
@@ -178,7 +188,7 @@ io.on('connection', (socket) => {
               p.currentRoundScore = 0;
             });
           }
-        }, 5000); // Show leaderboard for 5 seconds
+        }, 5000);
       }
     }
   });
@@ -193,7 +203,7 @@ io.on('connection', (socket) => {
     Object.values(room.players).forEach(p => {
       p.score = 0;
       p.currentRoundScore = 0;
-      p.isReady = (p.id === room.hostId); // host starts ready
+      p.isReady = (p.id === room.hostId);
     });
 
     io.to(code).emit('game-restarted', room);
@@ -203,7 +213,6 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log(`User disconnected: ${socket.id}`);
     
-    // Find room the player was in
     for (const [code, room] of rooms.entries()) {
       if (room.players[socket.id]) {
         delete room.players[socket.id];
@@ -211,11 +220,9 @@ io.on('connection', (socket) => {
         const remainingPlayers = Object.keys(room.players);
         
         if (remainingPlayers.length === 0) {
-          // Delete room if empty
           rooms.delete(code);
           console.log(`Room ${code} deleted (empty)`);
         } else {
-          // If host left, assign a new host
           if (room.hostId === socket.id) {
             room.hostId = remainingPlayers[0];
             room.players[room.hostId].isReady = true;
@@ -230,27 +237,23 @@ io.on('connection', (socket) => {
   });
 });
 
-// Manage the timed sequence of a round
-// Phase 1: Instruction Screen (3s)
-// Phase 2: Play Game (10s)
+// Manage the timed sequence of a round with customizable duration
 function startRoundSequence(code, roundIndex) {
   const room = rooms.get(code);
   if (!room) return;
 
   const miniGame = room.miniGamesOrder[roundIndex];
 
-  // Send instruction stage trigger
   io.to(code).emit('round-instruction', {
     game: miniGame,
     roundIndex
   });
 
-  // Wait 3 seconds, then start playing
+  // Wait 3 seconds countdown, then start playing
   setTimeout(() => {
     const activeRoom = rooms.get(code);
     if (!activeRoom || !activeRoom.gameStarted || activeRoom.currentRound !== roundIndex) return;
 
-    // Reset current round scores
     Object.values(activeRoom.players).forEach(p => {
       p.currentRoundScore = 0;
       p.isReady = false;
@@ -258,26 +261,25 @@ function startRoundSequence(code, roundIndex) {
 
     io.to(code).emit('round-start', {
       game: miniGame,
-      duration: 10 // 10 seconds gameplay
+      duration: activeRoom.roundDuration
     });
 
-    // After 10.5 seconds, force collect scores for anyone who didn't submit
+    // Auto collect score after round duration + 500ms grace period
+    const roundMs = (activeRoom.roundDuration * 1000) + 500;
     setTimeout(() => {
       const currentRoom = rooms.get(code);
       if (!currentRoom || !currentRoom.gameStarted || currentRoom.currentRound !== roundIndex) return;
 
-      // Find players who haven't finished and auto-submit
       let updated = false;
       Object.values(currentRoom.players).forEach(p => {
         if (!p.isReady) {
-          p.score += p.currentRoundScore; // Add whatever they got
+          p.score += p.currentRoundScore;
           p.isReady = true;
           updated = true;
         }
       });
 
       if (updated) {
-        // Trigger completion if not already triggered
         const allPlayers = Object.values(currentRoom.players);
         const allDone = allPlayers.every(p => p.isReady);
         if (allDone) {
@@ -287,7 +289,6 @@ function startRoundSequence(code, roundIndex) {
             currentRound: currentRoom.currentRound
           });
 
-          // Go to next round or end game after 5s
           setTimeout(() => {
             if (currentRoom.currentRound < currentRoom.miniGamesOrder.length - 1) {
               currentRoom.currentRound += 1;
@@ -303,7 +304,7 @@ function startRoundSequence(code, roundIndex) {
           }, 5000);
         }
       }
-    }, 10500);
+    }, roundMs);
 
   }, 3000);
 }

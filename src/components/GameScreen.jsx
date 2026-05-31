@@ -4,13 +4,17 @@ import PanicClicker from './MiniGames/PanicClicker';
 import StroopChaos from './MiniGames/StroopChaos';
 import ChaosTyping from './MiniGames/ChaosTyping';
 import QuickMath from './MiniGames/QuickMath';
+import ClickRed from './MiniGames/ClickRed';
+import SoundRepeat from './MiniGames/SoundRepeat';
 
 const GAME_COMPONENTS = {
   BalloonPop,
   PanicClicker,
   StroopChaos,
   ChaosTyping,
-  QuickMath
+  QuickMath,
+  ClickRed,
+  SoundRepeat
 };
 
 const GAME_INSTRUCTIONS = {
@@ -18,15 +22,31 @@ const GAME_INSTRUCTIONS = {
   PanicClicker: { title: '⚡ Panic Clicker', desc: 'Click the button as fast as it moves!' },
   StroopChaos: { title: '🎨 Stroop Chaos', desc: 'Look at the word! Choose the matching text color or written word!' },
   ChaosTyping: { title: '⌨️ Chaos Typing', desc: 'Type the wacky words as fast as possible!' },
-  QuickMath: { title: '🧮 Quick Math', desc: 'Choose YES or NO for simple math equations! (Keyboard: Arrow Left/Right)' }
+  QuickMath: { title: '🧮 Quick Math', desc: 'Choose YES or NO for simple math equations! (Keyboard: Arrow Left/Right)' },
+  ClickRed: { title: '🔴 Click Red', desc: 'Click the red circle as fast as possible!' },
+  SoundRepeat: { title: '🔊 Sound Repeat', desc: 'Repeat the flashing pattern of sounds and lights!' }
 };
 
-export default function GameScreen({ roomCode, activeGame, gamePhase, playerId, players, socket, useSoundHook, isSolo, onSoloScoreChange }) {
+export default function GameScreen({ 
+  roomCode, 
+  activeGame, 
+  gamePhase, 
+  playerId, 
+  players, 
+  socket, 
+  useSoundHook, 
+  isSolo, 
+  onSoloScoreChange,
+  roundDuration = 10 
+}) {
   const [localScore, setLocalScore] = useState(0);
   const [countdown, setCountdown] = useState(3);
-  const [timeLeft, setTimeLeft] = useState(10);
+  const [timeLeft, setTimeLeft] = useState(roundDuration);
   const [opponentProgress, setOpponentProgress] = useState({}); // playerId -> progress
   const timerRef = useRef(null);
+  
+  // Ref to store the latest local score and prevent stale closure in the timer callback
+  const localScoreRef = useRef(0);
 
   const { playTick, playBuzzer } = useSoundHook;
 
@@ -37,8 +57,9 @@ export default function GameScreen({ roomCode, activeGame, gamePhase, playerId, 
   useEffect(() => {
     if (gamePhase === 'instruction') {
       setLocalScore(0);
+      localScoreRef.current = 0;
       setCountdown(3);
-      setTimeLeft(10);
+      setTimeLeft(roundDuration);
       setOpponentProgress({});
       
       const countInterval = setInterval(() => {
@@ -53,12 +74,12 @@ export default function GameScreen({ roomCode, activeGame, gamePhase, playerId, 
 
       return () => clearInterval(countInterval);
     }
-  }, [gamePhase, activeGame]);
+  }, [gamePhase, activeGame, roundDuration]);
 
-  // 2. Handle 10s Gameplay Timer
+  // 2. Handle Gameplay Timer
   useEffect(() => {
     if (gamePhase === 'playing') {
-      setTimeLeft(10);
+      setTimeLeft(roundDuration);
       
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
@@ -78,7 +99,7 @@ export default function GameScreen({ roomCode, activeGame, gamePhase, playerId, 
 
       return () => clearInterval(timerRef.current);
     }
-  }, [gamePhase]);
+  }, [gamePhase, roundDuration]);
 
   // 3. Listen to real-time progress updates from opponents (Only if not in Solo)
   useEffect(() => {
@@ -101,6 +122,8 @@ export default function GameScreen({ roomCode, activeGame, gamePhase, playerId, 
 
   const handleScoreChange = (newScore) => {
     setLocalScore(newScore);
+    localScoreRef.current = newScore; // Update ref
+
     if (isSolo) {
       onSoloScoreChange(newScore);
     } else {
@@ -112,7 +135,8 @@ export default function GameScreen({ roomCode, activeGame, gamePhase, playerId, 
   const handleTimeUp = () => {
     playBuzzer();
     if (!isSolo) {
-      socket.emit('submit-round-score', { code: roomCode, score: localScore });
+      // Submit latest score from Ref instead of stale localScore variable
+      socket.emit('submit-round-score', { code: roomCode, score: localScoreRef.current });
     }
   };
 
@@ -153,7 +177,7 @@ export default function GameScreen({ roomCode, activeGame, gamePhase, playerId, 
                   <div 
                     style={{ 
                       ...styles.timerProgress,
-                      width: `${(timeLeft / 10) * 100}%`,
+                      width: `${(timeLeft / roundDuration) * 100}%`,
                       backgroundColor: timeLeft <= 3 ? 'var(--neon-pink)' : 'var(--neon-green)',
                       boxShadow: timeLeft <= 3 ? '0 0 10px var(--neon-pink)' : '0 0 10px var(--neon-green)'
                     }} 

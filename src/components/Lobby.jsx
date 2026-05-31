@@ -3,6 +3,9 @@ import { getTopScores } from '../supabase';
 
 const AVATARS = ['👾', '🤪', '🦖', '🦙', '🍕', '🚀', '🦄', '💣', '🌶️', '🤡', '🍩', '🥑', '🍄', '🐙', '🐈'];
 
+// Pool of all 7 available mini-games
+const ALL_MINI_GAMES = ['BalloonPop', 'PanicClicker', 'StroopChaos', 'ChaosTyping', 'QuickMath', 'ClickRed', 'SoundRepeat'];
+
 export default function Lobby({ socket, setRoom, setPlayerId, useSoundHook, setSoloMode, setStage }) {
   const [name, setName] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState(AVATARS[0]);
@@ -10,6 +13,10 @@ export default function Lobby({ socket, setRoom, setPlayerId, useSoundHook, setS
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [error, setError] = useState('');
   const [highScores, setHighScores] = useState([]);
+  
+  // Custom round settings
+  const [roundsCount, setRoundsCount] = useState(5);
+  const [roundDuration, setRoundDuration] = useState(10);
   
   const { playCoin, playBuzzer } = useSoundHook;
 
@@ -33,7 +40,12 @@ export default function Lobby({ socket, setRoom, setPlayerId, useSoundHook, setS
 
     socket.emit('create-room', { name, avatar: selectedAvatar }, (response) => {
       if (response.success) {
-        setRoom(response.room);
+        // Set initial room configuration parameters
+        const roomData = response.room;
+        roomData.roundsCount = roundsCount;
+        roomData.roundDuration = roundDuration;
+        
+        setRoom(roomData);
         setPlayerId(socket.id);
         setSoloMode(false);
         setStage('room');
@@ -80,6 +92,13 @@ export default function Lobby({ socket, setRoom, setPlayerId, useSoundHook, setS
     setError('');
     playCoin();
 
+    // Shuffle and pick roundsCount games from all 7 mini-games
+    const shuffled = [...ALL_MINI_GAMES].sort(() => Math.random() - 0.5);
+    let selectedGames = [];
+    for (let i = 0; i < roundsCount; i++) {
+      selectedGames.push(shuffled[i % shuffled.length]);
+    }
+
     // Create a mock local room structure for solo play
     const mockRoom = {
       code: 'SOLO',
@@ -90,7 +109,9 @@ export default function Lobby({ socket, setRoom, setPlayerId, useSoundHook, setS
       },
       gameStarted: true,
       currentRound: 0,
-      miniGamesOrder: ['BalloonPop', 'PanicClicker', 'StroopChaos', 'ChaosTyping', 'QuickMath']
+      miniGamesOrder: selectedGames,
+      roundsCount: parseInt(roundsCount),
+      roundDuration: parseInt(roundDuration)
     };
 
     setRoom(mockRoom);
@@ -135,6 +156,41 @@ export default function Lobby({ socket, setRoom, setPlayerId, useSoundHook, setS
                   {av}
                 </div>
               ))}
+            </div>
+          </div>
+
+          <hr style={styles.divider} />
+
+          {/* GAME CONFIGURATION SELECTORS IN LOBBY */}
+          <div style={styles.settingsContainer}>
+            <div style={styles.settingsHalf}>
+              <label style={styles.label}>ROUNDS</label>
+              <select 
+                className="neon-input" 
+                style={styles.selectInput}
+                value={roundsCount} 
+                onChange={(e) => { playCoin(); setRoundsCount(parseInt(e.target.value)); }}
+              >
+                <option value={3}>3 Rounds</option>
+                <option value={5}>5 Rounds</option>
+                <option value={7}>7 Rounds</option>
+                <option value={10}>10 Rounds</option>
+              </select>
+            </div>
+            
+            <div style={styles.settingsHalf}>
+              <label style={styles.label}>DURATION</label>
+              <select 
+                className="neon-input" 
+                style={styles.selectInput}
+                value={roundDuration} 
+                onChange={(e) => { playCoin(); setRoundDuration(parseInt(e.target.value)); }}
+              >
+                <option value={5}>5 seconds</option>
+                <option value={10}>10 seconds</option>
+                <option value={15}>15 seconds</option>
+                <option value={20}>20 seconds</option>
+              </select>
             </div>
           </div>
 
@@ -231,7 +287,7 @@ const styles = {
     padding: '35px 30px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '20px',
+    gap: '15px',
     textAlign: 'center'
   },
   leaderboardPanel: {
@@ -250,16 +306,16 @@ const styles = {
     color: 'var(--text-muted)',
     fontSize: '0.95rem',
     lineHeight: '1.4',
-    marginBottom: '10px'
+    marginBottom: '5px'
   },
   label: {
     alignSelf: 'flex-start',
     fontFamily: 'var(--font-display)',
-    fontSize: '0.85rem',
+    fontSize: '0.8rem',
     fontWeight: '700',
     color: 'var(--text-muted)',
     letterSpacing: '1px',
-    marginBottom: '8px',
+    marginBottom: '4px',
     textAlign: 'left',
     display: 'block'
   },
@@ -272,16 +328,32 @@ const styles = {
     border: '0',
     height: '1px',
     background: 'var(--border-color)',
-    margin: '5px 0'
+    margin: '3px 0'
+  },
+  settingsContainer: {
+    display: 'flex',
+    gap: '15px',
+    width: '100%'
+  },
+  settingsHalf: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  selectInput: {
+    padding: '8px 12px',
+    fontSize: '0.9rem',
+    cursor: 'pointer',
+    borderRadius: '12px'
   },
   btnColumn: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '12px'
+    gap: '10px'
   },
   btnRow: {
     display: 'flex',
-    gap: '12px'
+    gap: '10px'
   },
   joinContainer: {
     display: 'flex',

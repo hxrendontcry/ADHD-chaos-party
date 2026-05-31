@@ -26,6 +26,7 @@ export default function App() {
   const [currentRound, setCurrentRound] = useState(0);
   const [gamePhase, setGamePhase] = useState('instruction'); // 'instruction' | 'playing'
   const [isSoloMode, setIsSoloMode] = useState(false);
+  const [roundDuration, setRoundDuration] = useState(10);
 
   // References for Solo Mode Timers
   const soloInstructionTimer = useRef(null);
@@ -51,8 +52,9 @@ export default function App() {
       if (!isSoloMode) setRoom(updatedRoom);
     });
 
-    socket.on('game-started', ({ miniGamesOrder, players }) => {
+    socket.on('game-started', ({ miniGamesOrder, players, roundDuration: serverDuration }) => {
       if (!isSoloMode) {
+        setRoundDuration(serverDuration || 10);
         setStage('game');
         setRoom(prev => ({ ...prev, players }));
         startBGM();
@@ -148,7 +150,7 @@ export default function App() {
           });
         }, 600);
 
-        // Phase 2: 10 seconds gameplay page
+        // Phase 2: gameplay page
         soloPlayTimer.current = setTimeout(() => {
           // Play buzzer on time up
           playBuzzer();
@@ -207,7 +209,7 @@ export default function App() {
             });
           }, 5000);
 
-        }, 10000);
+        }, room.roundDuration * 1000);
       }
     }
 
@@ -234,6 +236,7 @@ export default function App() {
   // Trigger start game for Solo
   useEffect(() => {
     if (isSoloMode && room && stage === 'lobby') {
+      setRoundDuration(room.roundDuration || 10);
       setStage('game');
       setActiveGame(room.miniGamesOrder[0]);
       setCurrentRound(0);
@@ -244,8 +247,15 @@ export default function App() {
 
   const handleSoloRestart = () => {
     // Re-shuffle mini-games
-    const shuffled = ['BalloonPop', 'PanicClicker', 'StroopChaos', 'ChaosTyping', 'QuickMath'].sort(() => Math.random() - 0.5);
+    const allGames = ['BalloonPop', 'PanicClicker', 'StroopChaos', 'ChaosTyping', 'QuickMath', 'ClickRed', 'SoundRepeat'];
+    const shuffled = [...allGames].sort(() => Math.random() - 0.5);
     
+    let selectedGames = [];
+    const count = room ? room.roundsCount : 5;
+    for (let i = 0; i < count; i++) {
+      selectedGames.push(shuffled[i % shuffled.length]);
+    }
+
     setRoom(prev => {
       const resetPlayers = { ...prev.players };
       resetPlayers.YOU.score = 0;
@@ -256,14 +266,14 @@ export default function App() {
       return {
         ...prev,
         currentRound: 0,
-        miniGamesOrder: shuffled,
+        miniGamesOrder: selectedGames,
         players: resetPlayers
       };
     });
 
     setStage('game');
     setCurrentRound(0);
-    setActiveGame(shuffled[0]);
+    setActiveGame(selectedGames[0]);
     setGamePhase('instruction');
     startBGM();
   };
@@ -312,6 +322,7 @@ export default function App() {
             // Overrides for Solo Mode
             isSolo={isSoloMode}
             onSoloScoreChange={handleSoloScoreChange}
+            roundDuration={roundDuration}
           />
         );
       case 'leaderboard':
