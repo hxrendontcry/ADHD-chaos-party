@@ -33,7 +33,7 @@ export default function PanicClicker({ score, onScoreChange, useSoundHook }) {
     };
     setScorePopups(prev => [...prev, newPopup]);
     setTimeout(() => {
-      setScorePopups(prev => p.id !== newPopup.id);
+      setScorePopups(prev => prev.filter(p => p.id !== newPopup.id));
     }, 800);
   };
 
