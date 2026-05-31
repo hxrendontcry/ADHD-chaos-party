@@ -292,3 +292,68 @@ h1, h2, h3, h4 {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 0, 127, 0.3);
 }
+
+/* Spinner Styles for numeric inputs */
+.spinner-container {
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.25);
+  border: 2px solid var(--border-color);
+  border-radius: 16px;
+  overflow: hidden;
+  height: 42px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.spinner-container:focus-within {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+.spinner-btn {
+  width: 32px;
+  height: 100%;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  outline: none;
+}
+
+.spinner-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.spinner-btn:active {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.spinner-input {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  color: white;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 700;
+  outline: none;
+}
+
+/* Hide spin buttons in input type number */
+.spinner-input::-webkit-outer-spin-button,
+.spinner-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.spinner-input[type=number] {
+  -moz-appearance: textfield;
+}

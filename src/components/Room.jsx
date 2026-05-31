@@ -116,41 +116,64 @@ export default function Room({ room, playerId, socket, useSoundHook }) {
             <div style={styles.settingsForm}>
               <div style={styles.settingsGroup}>
                 <label style={styles.settingsLabel}>ROUNDS COUNT</label>
-                <select 
-                  className="neon-input" 
-                  style={styles.selectInput}
-                  value={roundsCount} 
-                  onChange={(e) => { playCoin(); setRoundsCount(parseInt(e.target.value)); }}
-                >
-                  <option value={1}>1 Round (Single Duel)</option>
-                  <option value={2}>2 Rounds</option>
-                  <option value={3}>3 Rounds (Short Blitz)</option>
-                  <option value={5}>5 Rounds (Standard)</option>
-                  <option value={7}>7 Rounds (Endurance)</option>
-                  <option value={10}>10 Rounds (Chaos Master)</option>
-                  <option value={12}>12 Rounds</option>
-                  <option value={15}>15 Rounds (Ultimate Marathon)</option>
-                </select>
+                <div className="spinner-container">
+                  <button 
+                    type="button" 
+                    className="spinner-btn"
+                    onClick={() => { playCoin(); setRoundsCount(prev => Math.max(1, prev - 1)); }}
+                  >
+                    -
+                  </button>
+                  <input 
+                    type="number"
+                    className="spinner-input"
+                    min="1"
+                    max="50"
+                    value={roundsCount}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 1;
+                      setRoundsCount(Math.min(50, Math.max(1, val)));
+                    }}
+                  />
+                  <button 
+                    type="button" 
+                    className="spinner-btn"
+                    onClick={() => { playCoin(); setRoundsCount(prev => Math.min(50, prev + 1)); }}
+                  >
+                    +
+                  </button>
+                </div>
               </div>
 
               <div style={styles.settingsGroup}>
-                <label style={styles.settingsLabel}>STAGE DURATION</label>
-                <select 
-                  className="neon-input" 
-                  style={styles.selectInput}
-                  value={roundDuration} 
-                  onChange={(e) => { playCoin(); setRoundDuration(parseInt(e.target.value)); }}
-                >
-                  <option value={3}>3 seconds (LIGHTNING RUSH)</option>
-                  <option value={5}>5 seconds</option>
-                  <option value={8}>8 seconds</option>
-                  <option value={10}>10 seconds (Standard)</option>
-                  <option value={12}>12 seconds</option>
-                  <option value={15}>15 seconds</option>
-                  <option value={20}>20 seconds (Focus Mode)</option>
-                  <option value={25}>25 seconds</option>
-                  <option value={30}>30 seconds (Patience Test)</option>
-                </select>
+                <label style={styles.settingsLabel}>STAGE DURATION (s)</label>
+                <div className="spinner-container">
+                  <button 
+                    type="button" 
+                    className="spinner-btn"
+                    onClick={() => { playCoin(); setRoundDuration(prev => Math.max(3, prev - 1)); }}
+                  >
+                    -
+                  </button>
+                  <input 
+                    type="number"
+                    className="spinner-input"
+                    min="3"
+                    max="60"
+                    value={roundDuration}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 3;
+                      setRoundDuration(Math.min(60, Math.max(3, val)));
+                    }}
+                  />
+                  <button 
+                    type="button" 
+                    className="spinner-btn"
+                    onClick={() => { playCoin(); setRoundDuration(prev => Math.min(60, prev + 1)); }}
+                  >
+                    +
+                  </button>
+                </div>
               </div>
 
               {/* Game Selection Toggle */}
