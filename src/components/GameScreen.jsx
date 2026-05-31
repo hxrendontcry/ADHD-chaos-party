@@ -10,6 +10,11 @@ import EmojiMatch from './MiniGames/EmojiMatch';
 import ShakeSoda from './MiniGames/ShakeSoda';
 import CoinCatch from './MiniGames/CoinCatch';
 import KeyMasher from './MiniGames/KeyMasher';
+import ColorTap from './MiniGames/ColorTap';
+import TargetShoot from './MiniGames/TargetShoot';
+import RhythmTap from './MiniGames/RhythmTap';
+import FindImpostor from './MiniGames/FindImpostor';
+import NumberConnect from './MiniGames/NumberConnect';
 
 const GAME_COMPONENTS = {
   BalloonPop,
@@ -22,7 +27,12 @@ const GAME_COMPONENTS = {
   EmojiMatch,
   ShakeSoda,
   CoinCatch,
-  KeyMasher
+  KeyMasher,
+  ColorTap,
+  TargetShoot,
+  RhythmTap,
+  FindImpostor,
+  NumberConnect
 };
 
 const GAME_INSTRUCTIONS = {
@@ -36,7 +46,12 @@ const GAME_INSTRUCTIONS = {
   EmojiMatch: { title: '🔍 Emoji Match', desc: 'Find the odd emoji out as fast as you can!' },
   ShakeSoda: { title: '🥤 Shake Soda', desc: 'Click/Tap the soda can repeatedly to shake it and explode it!' },
   CoinCatch: { title: '🗑️ Coin Catch', desc: 'Move your basket to catch falling coins and avoid bombs!' },
-  KeyMasher: { title: '⌨️ Key Masher', desc: 'Mash the SPACEBAR or click the button as fast as possible!' }
+  KeyMasher: { title: '⌨️ Key Masher', desc: 'Mash the SPACEBAR or click the button as fast as possible!' },
+  ColorTap: { title: '🌈 Color Tap', desc: 'Click/Tap the colored pad that matches the neon target word!' },
+  TargetShoot: { title: '🎯 Target Shoot', desc: 'Shoot/Click the floating bullseyes as fast as possible! Do not miss!' },
+  RhythmTap: { title: '⚡ Rhythm Tap', desc: 'Press SPACEBAR or click when the moving needle is in the green zone!' },
+  FindImpostor: { title: '🔍 Find Impostor', desc: 'Scan the letter grid and click the single different character!' },
+  NumberConnect: { title: '🔢 Number Connect', desc: 'Click the numbers in sequential order (1 → 2 → 3 → 4 → 5 → 6)!' }
 };
 
 export default function GameScreen({ 

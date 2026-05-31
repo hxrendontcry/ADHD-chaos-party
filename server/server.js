@@ -32,8 +32,13 @@ function generateRoomCode() {
   return code;
 }
 
-// Increased Pool of 11 mini-games
-const MINI_GAMES = ['BalloonPop', 'PanicClicker', 'StroopChaos', 'ChaosTyping', 'QuickMath', 'ClickRed', 'SoundRepeat', 'EmojiMatch', 'ShakeSoda', 'CoinCatch', 'KeyMasher'];
+// Expanded Pool of all 16 mini-games
+const MINI_GAMES = [
+  'BalloonPop', 'PanicClicker', 'StroopChaos', 'ChaosTyping', 'QuickMath', 
+  'ClickRed', 'SoundRepeat', 'EmojiMatch', 'ShakeSoda', 'CoinCatch', 
+  'KeyMasher', 'ColorTap', 'TargetShoot', 'RhythmTap', 'FindImpostor', 
+  'NumberConnect'
+];
 
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
@@ -103,7 +108,7 @@ io.on('connection', (socket) => {
   });
 
   // 3. Start Game (Host only) - now receives customizable settings
-  socket.on('start-game', ({ code, roundsCount, roundDuration }) => {
+  socket.on('start-game', ({ code, roundsCount, roundDuration, enabledGames }) => {
     const room = rooms.get(code);
     if (!room || room.hostId !== socket.id) return;
 
@@ -114,11 +119,13 @@ io.on('connection', (socket) => {
     room.roundsCount = parseInt(roundsCount) || 5;
     room.roundDuration = parseInt(roundDuration) || 10;
     
+    // Pick from host's selected games pool, or fallback to all games if none selected
+    const activePool = (enabledGames && enabledGames.length > 0) ? enabledGames : MINI_GAMES;
+    
     // Shuffle and construct game rotation order
-    const shuffled = [...MINI_GAMES].sort(() => Math.random() - 0.5);
+    const shuffled = [...activePool].sort(() => Math.random() - 0.5);
     let selectedGames = [];
     for (let i = 0; i < room.roundsCount; i++) {
-      // Loop around the games list if round count exceeds 7
       selectedGames.push(shuffled[i % shuffled.length]);
     }
     room.miniGamesOrder = selectedGames;

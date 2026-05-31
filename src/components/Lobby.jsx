@@ -3,8 +3,41 @@ import { getTopScores } from '../supabase';
 
 const AVATARS = ['👾', '🤪', '🦖', '🦙', '🍕', '🚀', '🦄', '💣', '🌶️', '🤡', '🍩', '🥑', '🍄', '🐙', '🐈'];
 
-// Pool of all 7 available mini-games
-const ALL_MINI_GAMES = ['BalloonPop', 'PanicClicker', 'StroopChaos', 'ChaosTyping', 'QuickMath', 'ClickRed', 'SoundRepeat'];
+// Pool of all 16 available mini-games
+const ALL_MINI_GAMES = [
+  'BalloonPop', 'PanicClicker', 'StroopChaos', 'ChaosTyping', 'QuickMath', 
+  'ClickRed', 'SoundRepeat', 'EmojiMatch', 'ShakeSoda', 'CoinCatch', 
+  'KeyMasher', 'ColorTap', 'TargetShoot', 'RhythmTap', 'FindImpostor', 
+  'NumberConnect'
+];
+
+const GAME_LABELS = {
+  BalloonPop: '🎈 Balloon Pop',
+  PanicClicker: '⚡ Panic Clicker',
+  StroopChaos: '🎨 Stroop Chaos',
+  ChaosTyping: '⌨️ Chaos Typing',
+  QuickMath: '🧮 Quick Math',
+  ClickRed: '🔴 Click Red',
+  SoundRepeat: '🔊 Sound Repeat',
+  EmojiMatch: '🔍 Emoji Match',
+  ShakeSoda: '🥤 Shake Soda',
+  CoinCatch: '🗑️ Coin Catch',
+  KeyMasher: '⌨️ Key Masher',
+  ColorTap: '🌈 Color Tap',
+  TargetShoot: '🎯 Target Shoot',
+  RhythmTap: '⚡ Rhythm Tap',
+  FindImpostor: '🔍 Find Impostor',
+  NumberConnect: '🔢 Number Connect'
+};
+
+function getBotName(difficulty) {
+  switch (difficulty) {
+    case 'easy': return 'Potato Bot 🥔';
+    case 'hard': return 'Pro Cyber ⚡';
+    case 'insane': return 'CyberGod 👽';
+    default: return 'Bot Turbo 🤖';
+  }
+}
 
 export default function Lobby({ socket, setRoom, setPlayerId, useSoundHook, setSoloMode, setStage }) {
   const [name, setName] = useState('');
@@ -14,9 +47,11 @@ export default function Lobby({ socket, setRoom, setPlayerId, useSoundHook, setS
   const [error, setError] = useState('');
   const [highScores, setHighScores] = useState([]);
   
-  // Custom round settings
   const [roundsCount, setRoundsCount] = useState(5);
   const [roundDuration, setRoundDuration] = useState(10);
+  const [botDifficulty, setBotDifficulty] = useState('medium');
+  const [enabledGames, setEnabledGames] = useState(new Set(ALL_MINI_GAMES));
+  const [showGameSelector, setShowGameSelector] = useState(false);
   
   const { playCoin, playBuzzer } = useSoundHook;
 
@@ -40,7 +75,6 @@ export default function Lobby({ socket, setRoom, setPlayerId, useSoundHook, setS
 
     socket.emit('create-room', { name, avatar: selectedAvatar }, (response) => {
       if (response.success) {
-        // Set initial room configuration parameters
         const roomData = response.room;
         roomData.roundsCount = roundsCount;
         roomData.roundDuration = roundDuration;
@@ -89,11 +123,20 @@ export default function Lobby({ socket, setRoom, setPlayerId, useSoundHook, setS
       setError('Please enter a nickname!');
       return;
     }
+    
+    // Filter active games
+    const activeGamesList = ALL_MINI_GAMES.filter(g => enabledGames.has(g));
+    if (activeGamesList.length === 0) {
+      playBuzzer();
+      setError('Please select at least 1 mini-game!');
+      return;
+    }
+
     setError('');
     playCoin();
 
-    // Shuffle and pick roundsCount games from all 7 mini-games
-    const shuffled = [...ALL_MINI_GAMES].sort(() => Math.random() - 0.5);
+    // Shuffle and pick roundsCount games from enabled mini-games
+    const shuffled = [...activeGamesList].sort(() => Math.random() - 0.5);
     let selectedGames = [];
     for (let i = 0; i < roundsCount; i++) {
       selectedGames.push(shuffled[i % shuffled.length]);
@@ -105,13 +148,15 @@ export default function Lobby({ socket, setRoom, setPlayerId, useSoundHook, setS
       hostId: 'YOU',
       players: {
         'YOU': { id: 'YOU', name: name.trim(), avatar: selectedAvatar, score: 0, currentRoundScore: 0, isReady: true },
-        'BOT': { id: 'BOT', name: 'Bot Turbo 🤖', avatar: '🤖', score: 0, currentRoundScore: 0, isReady: false }
+        'BOT': { id: 'BOT', name: getBotName(botDifficulty), avatar: '🤖', score: 0, currentRoundScore: 0, isReady: false }
       },
       gameStarted: true,
       currentRound: 0,
       miniGamesOrder: selectedGames,
       roundsCount: parseInt(roundsCount),
-      roundDuration: parseInt(roundDuration)
+      roundDuration: parseInt(roundDuration),
+      botDifficulty: botDifficulty,
+      enabledGames: activeGamesList // save selected pool for restart
     };
 
     setRoom(mockRoom);
@@ -161,9 +206,9 @@ export default function Lobby({ socket, setRoom, setPlayerId, useSoundHook, setS
 
           <hr style={styles.divider} />
 
-          {/* GAME CONFIGURATION SELECTORS IN LOBBY */}
+          {/* EXPANDED GAME CONFIGURATION SELECTORS IN LOBBY */}
           <div style={styles.settingsContainer}>
-            <div style={styles.settingsHalf}>
+            <div style={styles.settingsThird}>
               <label style={styles.label}>ROUNDS</label>
               <select 
                 className="neon-input" 
@@ -171,14 +216,18 @@ export default function Lobby({ socket, setRoom, setPlayerId, useSoundHook, setS
                 value={roundsCount} 
                 onChange={(e) => { playCoin(); setRoundsCount(parseInt(e.target.value)); }}
               >
+                <option value={1}>1 Round</option>
+                <option value={2}>2 Rounds</option>
                 <option value={3}>3 Rounds</option>
                 <option value={5}>5 Rounds</option>
                 <option value={7}>7 Rounds</option>
                 <option value={10}>10 Rounds</option>
+                <option value={12}>12 Rounds</option>
+                <option value={15}>15 Rounds</option>
               </select>
             </div>
             
-            <div style={styles.settingsHalf}>
+            <div style={styles.settingsThird}>
               <label style={styles.label}>DURATION</label>
               <select 
                 className="neon-input" 
@@ -186,13 +235,97 @@ export default function Lobby({ socket, setRoom, setPlayerId, useSoundHook, setS
                 value={roundDuration} 
                 onChange={(e) => { playCoin(); setRoundDuration(parseInt(e.target.value)); }}
               >
+                <option value={3}>3s (SPEED DEMON)</option>
                 <option value={5}>5 seconds</option>
+                <option value={8}>8 seconds</option>
                 <option value={10}>10 seconds</option>
+                <option value={12}>12 seconds</option>
                 <option value={15}>15 seconds</option>
                 <option value={20}>20 seconds</option>
+                <option value={25}>25 seconds</option>
+                <option value={30}>30 seconds</option>
+              </select>
+            </div>
+
+            <div style={styles.settingsThird}>
+              <label style={styles.label}>BOT LEVEL</label>
+              <select 
+                className="neon-input" 
+                style={styles.selectInput}
+                value={botDifficulty} 
+                onChange={(e) => { playCoin(); setBotDifficulty(e.target.value); }}
+              >
+                <option value="easy">Potato 🥔</option>
+                <option value="medium">Normal 🤖</option>
+                <option value="hard">Pro ⚡</option>
+                <option value="insane">CyberGod 👽</option>
               </select>
             </div>
           </div>
+
+          {/* Game Selection Toggle */}
+          <div style={styles.gameSelectorToggleContainer}>
+            <button 
+              className="btn btn-secondary" 
+              style={{ width: '100%', fontSize: '0.85rem', padding: '10px 0', borderRadius: '12px' }}
+              onClick={() => { playCoin(); setShowGameSelector(!showGameSelector); }}
+            >
+              🧩 {showGameSelector ? 'CLOSE GAME SELECTOR' : 'SELECT MINI-GAMES POOL'} ({enabledGames.size}/{ALL_MINI_GAMES.length})
+            </button>
+          </div>
+
+          {showGameSelector && (
+            <div className="glass-panel" style={styles.gameSelectorPanel}>
+              <div style={styles.gameSelectorHeader}>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ fontSize: '0.7rem', padding: '4px 10px', borderRadius: '8px' }}
+                  onClick={() => { playCoin(); setEnabledGames(new Set(ALL_MINI_GAMES)); }}
+                >
+                  SELECT ALL
+                </button>
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ fontSize: '0.7rem', padding: '4px 10px', borderRadius: '8px' }}
+                  onClick={() => { playCoin(); setEnabledGames(new Set()); }}
+                >
+                  CLEAR ALL
+                </button>
+              </div>
+              <div style={styles.gameSelectorGrid}>
+                {ALL_MINI_GAMES.map((gameName) => {
+                  const isChecked = enabledGames.has(gameName);
+                  return (
+                    <label 
+                      key={gameName} 
+                      style={{
+                        ...styles.gameSelectorLabel,
+                        borderColor: isChecked ? 'var(--neon-cyan)' : 'rgba(255, 255, 255, 0.05)',
+                        background: isChecked ? 'rgba(0, 240, 255, 0.05)' : 'rgba(0, 0, 0, 0.2)'
+                      }}
+                    >
+                      <input 
+                        type="checkbox" 
+                        style={styles.checkbox}
+                        checked={isChecked}
+                        onChange={() => {
+                          playCoin();
+                          const updated = new Set(enabledGames);
+                          if (updated.has(gameName)) {
+                            updated.delete(gameName);
+                          } else {
+                            updated.add(gameName);
+                          }
+                          setEnabledGames(updated);
+                        }}
+                      />
+                      <span style={{ fontSize: '0.8rem' }}>{GAME_LABELS[gameName]}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <hr style={styles.divider} />
 
@@ -332,17 +465,17 @@ const styles = {
   },
   settingsContainer: {
     display: 'flex',
-    gap: '15px',
+    gap: '10px',
     width: '100%'
   },
-  settingsHalf: {
+  settingsThird: {
     flex: 1,
     display: 'flex',
     flexDirection: 'column'
   },
   selectInput: {
-    padding: '8px 12px',
-    fontSize: '0.9rem',
+    padding: '8px 10px',
+    fontSize: '0.85rem',
     cursor: 'pointer',
     borderRadius: '12px'
   },
@@ -430,5 +563,50 @@ const styles = {
     color: 'var(--text-muted)',
     fontSize: '0.9rem',
     padding: '20px'
+  },
+  gameSelectorToggleContainer: {
+    width: '100%',
+    marginTop: '5px'
+  },
+  gameSelectorPanel: {
+    width: '100%',
+    padding: '15px',
+    marginTop: '10px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    background: 'rgba(22, 22, 39, 0.85)',
+    border: '1.5px solid rgba(255, 255, 255, 0.05)',
+    borderRadius: '16px',
+    maxHeight: '220px',
+    overflowY: 'auto'
+  },
+  gameSelectorHeader: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: '8px'
+  },
+  gameSelectorGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+    gap: '8px',
+    textAlign: 'left'
+  },
+  gameSelectorLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '6px 8px',
+    borderRadius: '10px',
+    border: '1.5px solid transparent',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+    userSelect: 'none'
+  },
+  checkbox: {
+    cursor: 'pointer',
+    accentColor: 'var(--neon-cyan)',
+    width: '14px',
+    height: '14px'
   }
 };

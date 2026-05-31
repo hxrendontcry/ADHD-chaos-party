@@ -1,9 +1,37 @@
 import React, { useState } from 'react';
 
+const ALL_MINI_GAMES = [
+  'BalloonPop', 'PanicClicker', 'StroopChaos', 'ChaosTyping', 'QuickMath', 
+  'ClickRed', 'SoundRepeat', 'EmojiMatch', 'ShakeSoda', 'CoinCatch', 
+  'KeyMasher', 'ColorTap', 'TargetShoot', 'RhythmTap', 'FindImpostor', 
+  'NumberConnect'
+];
+
+const GAME_LABELS = {
+  BalloonPop: '🎈 Balloon Pop',
+  PanicClicker: '⚡ Panic Clicker',
+  StroopChaos: '🎨 Stroop Chaos',
+  ChaosTyping: '⌨️ Chaos Typing',
+  QuickMath: '🧮 Quick Math',
+  ClickRed: '🔴 Click Red',
+  SoundRepeat: '🔊 Sound Repeat',
+  EmojiMatch: '🔍 Emoji Match',
+  ShakeSoda: '🥤 Shake Soda',
+  CoinCatch: '🗑️ Coin Catch',
+  KeyMasher: '⌨️ Key Masher',
+  ColorTap: '🌈 Color Tap',
+  TargetShoot: '🎯 Target Shoot',
+  RhythmTap: '⚡ Rhythm Tap',
+  FindImpostor: '🔍 Find Impostor',
+  NumberConnect: '🔢 Number Connect'
+};
+
 export default function Room({ room, playerId, socket, useSoundHook }) {
   const [copied, setCopied] = useState(false);
   const [roundsCount, setRoundsCount] = useState(5);
   const [roundDuration, setRoundDuration] = useState(10);
+  const [enabledGames, setEnabledGames] = useState(new Set(ALL_MINI_GAMES));
+  const [showGameSelector, setShowGameSelector] = useState(false);
   
   const { playCoin } = useSoundHook;
 
@@ -19,10 +47,17 @@ export default function Room({ room, playerId, socket, useSoundHook }) {
 
   const handleStartGame = () => {
     playCoin();
+    const activeGamesList = ALL_MINI_GAMES.filter(g => enabledGames.has(g));
+    if (activeGamesList.length === 0) {
+      alert("Please select at least 1 mini-game!");
+      return;
+    }
+
     socket.emit('start-game', { 
       code: room.code,
       roundsCount,
-      roundDuration
+      roundDuration,
+      enabledGames: activeGamesList
     });
   };
 
@@ -85,12 +120,16 @@ export default function Room({ room, playerId, socket, useSoundHook }) {
                   className="neon-input" 
                   style={styles.selectInput}
                   value={roundsCount} 
-                  onChange={(e) => { playCoin(); setRoundsCount(e.target.value); }}
+                  onChange={(e) => { playCoin(); setRoundsCount(parseInt(e.target.value)); }}
                 >
+                  <option value={1}>1 Round (Single Duel)</option>
+                  <option value={2}>2 Rounds</option>
                   <option value={3}>3 Rounds (Short Blitz)</option>
                   <option value={5}>5 Rounds (Standard)</option>
                   <option value={7}>7 Rounds (Endurance)</option>
                   <option value={10}>10 Rounds (Chaos Master)</option>
+                  <option value={12}>12 Rounds</option>
+                  <option value={15}>15 Rounds (Ultimate Marathon)</option>
                 </select>
               </div>
 
@@ -100,14 +139,86 @@ export default function Room({ room, playerId, socket, useSoundHook }) {
                   className="neon-input" 
                   style={styles.selectInput}
                   value={roundDuration} 
-                  onChange={(e) => { playCoin(); setRoundDuration(e.target.value); }}
+                  onChange={(e) => { playCoin(); setRoundDuration(parseInt(e.target.value)); }}
                 >
-                  <option value={5}>5 seconds (LIGHTNING PANIC)</option>
+                  <option value={3}>3 seconds (LIGHTNING RUSH)</option>
+                  <option value={5}>5 seconds</option>
+                  <option value={8}>8 seconds</option>
                   <option value={10}>10 seconds (Standard)</option>
-                  <option value={15}>15 seconds (Relaxed)</option>
+                  <option value={12}>12 seconds</option>
+                  <option value={15}>15 seconds</option>
                   <option value={20}>20 seconds (Focus Mode)</option>
+                  <option value={25}>25 seconds</option>
+                  <option value={30}>30 seconds (Patience Test)</option>
                 </select>
               </div>
+
+              {/* Game Selection Toggle */}
+              <div style={styles.gameSelectorToggleContainer}>
+                <button 
+                  type="button"
+                  className="btn btn-secondary" 
+                  style={{ width: '100%', fontSize: '0.85rem', padding: '10px 0', borderRadius: '12px' }}
+                  onClick={() => { playCoin(); setShowGameSelector(!showGameSelector); }}
+                >
+                  🧩 {showGameSelector ? 'CLOSE GAME SELECTOR' : 'SELECT MINI-GAMES POOL'} ({enabledGames.size}/{ALL_MINI_GAMES.length})
+                </button>
+              </div>
+
+              {showGameSelector && (
+                <div className="glass-panel" style={styles.gameSelectorPanel}>
+                  <div style={styles.gameSelectorHeader}>
+                    <button 
+                      type="button"
+                      className="btn btn-secondary" 
+                      style={{ fontSize: '0.7rem', padding: '4px 10px', borderRadius: '8px' }}
+                      onClick={() => { playCoin(); setEnabledGames(new Set(ALL_MINI_GAMES)); }}
+                    >
+                      SELECT ALL
+                    </button>
+                    <button 
+                      type="button"
+                      className="btn btn-secondary" 
+                      style={{ fontSize: '0.7rem', padding: '4px 10px', borderRadius: '8px' }}
+                      onClick={() => { playCoin(); setEnabledGames(new Set()); }}
+                    >
+                      CLEAR ALL
+                    </button>
+                  </div>
+                  <div style={styles.gameSelectorGrid}>
+                    {ALL_MINI_GAMES.map((gameName) => {
+                      const isChecked = enabledGames.has(gameName);
+                      return (
+                        <label 
+                          key={gameName} 
+                          style={{
+                            ...styles.gameSelectorLabel,
+                            borderColor: isChecked ? 'var(--neon-cyan)' : 'rgba(255, 255, 255, 0.05)',
+                            background: isChecked ? 'rgba(0, 240, 255, 0.05)' : 'rgba(0, 0, 0, 0.2)'
+                          }}
+                        >
+                          <input 
+                            type="checkbox" 
+                            style={styles.checkbox}
+                            checked={isChecked}
+                            onChange={() => {
+                              playCoin();
+                              const updated = new Set(enabledGames);
+                              if (updated.has(gameName)) {
+                                updated.delete(gameName);
+                              } else {
+                                updated.add(gameName);
+                              }
+                              setEnabledGames(updated);
+                            }}
+                          />
+                          <span style={{ fontSize: '0.8rem' }}>{GAME_LABELS[gameName]}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div style={styles.settingsReadOnly}>
@@ -304,5 +415,50 @@ const styles = {
     fontWeight: '700',
     color: 'var(--neon-cyan)',
     textShadow: '0 0 10px rgba(0, 240, 255, 0.4)'
+  },
+  gameSelectorToggleContainer: {
+    width: '100%',
+    marginTop: '5px'
+  },
+  gameSelectorPanel: {
+    width: '100%',
+    padding: '15px',
+    marginTop: '10px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    background: 'rgba(22, 22, 39, 0.85)',
+    border: '1.5px solid rgba(255, 255, 255, 0.05)',
+    borderRadius: '16px',
+    maxHeight: '220px',
+    overflowY: 'auto'
+  },
+  gameSelectorHeader: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: '8px'
+  },
+  gameSelectorGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+    gap: '8px',
+    textAlign: 'left'
+  },
+  gameSelectorLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '6px 8px',
+    borderRadius: '10px',
+    border: '1.5px solid transparent',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+    userSelect: 'none'
+  },
+  checkbox: {
+    cursor: 'pointer',
+    accentColor: 'var(--neon-cyan)',
+    width: '14px',
+    height: '14px'
   }
 };

@@ -137,18 +137,37 @@ export default function App() {
       } 
       
       else if (gamePhase === 'playing') {
-        // Start Bot progress increase interval
+        // Start Bot progress increase interval based on difficulty config
+        const diff = room ? room.botDifficulty : 'medium';
+        let intervalTime = 600;
+        let minInc = 4;
+        let maxInc = 8; // adds 4 to 11 points (4 + rand(0..7))
+
+        if (diff === 'easy') {
+          intervalTime = 900;
+          minInc = 1;
+          maxInc = 4; // adds 1-4 points
+        } else if (diff === 'hard') {
+          intervalTime = 400;
+          minInc = 8;
+          maxInc = 10; // adds 8-17 points
+        } else if (diff === 'insane') {
+          intervalTime = 250;
+          minInc = 14;
+          maxInc = 15; // adds 14-28 points
+        }
+
         soloBotProgressTimer.current = setInterval(() => {
           setRoom(prev => {
             if (!prev) return null;
             const updatedPlayers = { ...prev.players };
             if (updatedPlayers.BOT) {
-              const increment = Math.floor(Math.random() * 8) + 4; // Add 4-11 points
+              const increment = Math.floor(Math.random() * maxInc) + minInc;
               updatedPlayers.BOT.currentRoundScore += increment;
             }
             return { ...prev, players: updatedPlayers };
           });
-        }, 600);
+        }, intervalTime);
 
         // Phase 2: gameplay page
         soloPlayTimer.current = setTimeout(() => {
@@ -246,9 +265,16 @@ export default function App() {
   }, [isSoloMode, room, stage]);
 
   const handleSoloRestart = () => {
-    // Re-shuffle mini-games
-    const allGames = ['BalloonPop', 'PanicClicker', 'StroopChaos', 'ChaosTyping', 'QuickMath', 'ClickRed', 'SoundRepeat'];
-    const shuffled = [...allGames].sort(() => Math.random() - 0.5);
+    // Re-shuffle mini-games using room's custom enabledGames list, or default to all 16 games
+    const activePool = (room && room.enabledGames && room.enabledGames.length > 0)
+      ? room.enabledGames
+      : [
+          'BalloonPop', 'PanicClicker', 'StroopChaos', 'ChaosTyping', 'QuickMath', 
+          'ClickRed', 'SoundRepeat', 'EmojiMatch', 'ShakeSoda', 'CoinCatch', 
+          'KeyMasher', 'ColorTap', 'TargetShoot', 'RhythmTap', 'FindImpostor', 
+          'NumberConnect'
+        ];
+    const shuffled = [...activePool].sort(() => Math.random() - 0.5);
     
     let selectedGames = [];
     const count = room ? room.roundsCount : 5;
