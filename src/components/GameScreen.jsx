@@ -19,6 +19,8 @@ import SumChaos from './MiniGames/SumChaos';
 import ColorShade from './MiniGames/ColorShade';
 import FruitSlice from './MiniGames/FruitSlice';
 import WordRain from './MiniGames/WordRain';
+import EmojiMemory from './MiniGames/EmojiMemory';
+import MathSign from './MiniGames/MathSign';
 
 const GAME_COMPONENTS = {
   BalloonPop,
@@ -40,7 +42,9 @@ const GAME_COMPONENTS = {
   SumChaos,
   ColorShade,
   FruitSlice,
-  WordRain
+  WordRain,
+  EmojiMemory,
+  MathSign
 };
 
 const GAME_INSTRUCTIONS = {
@@ -63,7 +67,9 @@ const GAME_INSTRUCTIONS = {
   SumChaos: { title: '🧮 Sum Chaos', desc: 'Click TWO numbers in the grid that add up exactly to the target sum!' },
   ColorShade: { title: '🎨 Color Shade', desc: 'Spot the single square with a slightly different shade of color!' },
   FruitSlice: { title: '⚔️ Fruit Slasher', desc: 'Swipe/Hover your cursor over the floating fruits! Avoid slicing the bombs!' },
-  WordRain: { title: '⌨️ Word Rain', desc: 'Type the falling words correctly into the input field to shoot them down!' }
+  WordRain: { title: '⌨️ Word Rain', desc: 'Type the falling words correctly into the input field to shoot them down!' },
+  EmojiMemory: { title: '🧠 Emoji Memory', desc: 'Memorize the cards and match the pairs as fast as you can!' },
+  MathSign: { title: '🧮 Math Sign', desc: 'Fill in the missing math operator (＋, －, ×, ÷) to solve the equation!' }
 };
 
 export default function GameScreen({ 

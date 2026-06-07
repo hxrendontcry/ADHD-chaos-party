@@ -4,7 +4,8 @@ const ALL_MINI_GAMES = [
   'BalloonPop', 'PanicClicker', 'StroopChaos', 'ChaosTyping', 'QuickMath', 
   'ClickRed', 'SoundRepeat', 'EmojiMatch', 'ShakeSoda', 'CoinCatch', 
   'KeyMasher', 'ColorTap', 'TargetShoot', 'RhythmTap', 'FindImpostor', 
-  'NumberConnect', 'SumChaos', 'ColorShade', 'FruitSlice', 'WordRain'
+  'NumberConnect', 'SumChaos', 'ColorShade', 'FruitSlice', 'WordRain',
+  'EmojiMemory', 'MathSign'
 ];
 
 const GAME_LABELS = {
@@ -27,7 +28,9 @@ const GAME_LABELS = {
   SumChaos: '🧮 Sum Chaos',
   ColorShade: '🎨 Color Shade',
   FruitSlice: '⚔️ Fruit Slasher',
-  WordRain: '⌨️ Word Rain'
+  WordRain: '⌨️ Word Rain',
+  EmojiMemory: '🧠 Emoji Memory',
+  MathSign: '🧮 Math Sign'
 };
 
 export default function Room({ room, playerId, socket, useSoundHook }) {

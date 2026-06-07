@@ -32,12 +32,13 @@ function generateRoomCode() {
   return code;
 }
 
-// Expanded Pool of all 20 mini-games
+// Expanded Pool of all 22 mini-games
 const MINI_GAMES = [
   'BalloonPop', 'PanicClicker', 'StroopChaos', 'ChaosTyping', 'QuickMath', 
   'ClickRed', 'SoundRepeat', 'EmojiMatch', 'ShakeSoda', 'CoinCatch', 
   'KeyMasher', 'ColorTap', 'TargetShoot', 'RhythmTap', 'FindImpostor', 
-  'NumberConnect', 'SumChaos', 'ColorShade', 'FruitSlice', 'WordRain'
+  'NumberConnect', 'SumChaos', 'ColorShade', 'FruitSlice', 'WordRain',
+  'EmojiMemory', 'MathSign'
 ];
 
 io.on('connection', (socket) => {
