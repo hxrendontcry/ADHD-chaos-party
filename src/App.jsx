@@ -265,14 +265,14 @@ export default function App() {
   }, [isSoloMode, room, stage]);
 
   const handleSoloRestart = () => {
-    // Re-shuffle mini-games using room's custom enabledGames list, or default to all 16 games
+    // Re-shuffle mini-games using room's custom enabledGames list, or default to all 20 games
     const activePool = (room && room.enabledGames && room.enabledGames.length > 0)
       ? room.enabledGames
       : [
           'BalloonPop', 'PanicClicker', 'StroopChaos', 'ChaosTyping', 'QuickMath', 
           'ClickRed', 'SoundRepeat', 'EmojiMatch', 'ShakeSoda', 'CoinCatch', 
           'KeyMasher', 'ColorTap', 'TargetShoot', 'RhythmTap', 'FindImpostor', 
-          'NumberConnect'
+          'NumberConnect', 'SumChaos', 'ColorShade', 'FruitSlice', 'WordRain'
         ];
     const shuffled = [...activePool].sort(() => Math.random() - 0.5);
     
